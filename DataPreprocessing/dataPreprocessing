@@ -1,0 +1,49 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+class TextPreprocessor:
+    def __init__(self, file_path = './data/combined_reviews.csv'):
+        """
+        Load the data from a CSV file and initialize the TextPreprocessor.
+        
+        :param file_path: path to the CSV file containing the dataset
+        """
+        self.data = pd.read_csv(file_path)
+        self.tfidf_vectorizer = TfidfVectorizer()
+
+    def preprocess(self, key, include_original=False, include_rating=False, include_sentiScore=False):
+        """
+        Preprocess the data based on the specified key and optionally include additional features.
+        
+        :param key: string key to specify which preprocessing setting to use
+        :param include_original: bool, if True, include the original 'comment' column
+        :param include_rating: bool, if True, include the 'rating' column
+        :param include_sentiScore: bool, if True, include the 'sentiScore' column
+        :return: Preprocessed feature set
+        """
+        features = []
+
+        if key == "stopwords_removal_nltk":
+            features.append(self.data['stopwords_removal_nltk'])
+        elif key == "stopwords_removal_lemmatization":
+            features.append(self.data['stopwords_removal_lemmatization'])
+        elif key == "tfidf":
+            features.append(pd.Series(self.tfidf_vectorizer.fit_transform(self.data['comment']).toarray().flatten()))
+        else:
+            raise ValueError("Unsupported key provided.")
+
+        if include_original:
+            features.append(self.data['comment'])
+
+        if include_rating:
+            features.append(self.data['rating'])
+
+        if include_sentiScore:
+            features.append(self.data['sentiScore'])
+
+        # Combine all selected features into a single DataFrame
+        return pd.concat(features, axis=1)
+
+# Example usage:
+# preprocessor = TextPreprocessor('path_to_your_data.csv')
+# features = preprocessor.preprocess('tfidf', include_original=True, include_rating=True, include_sentiScore=True)

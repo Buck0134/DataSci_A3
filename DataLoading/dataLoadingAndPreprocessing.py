@@ -25,6 +25,9 @@ user_exp_df = load_json_file(folder_path + user_exp_path, 'UserExperience')
 
 # Combine all the dataframes into one
 combined_df = pd.concat([bug_df, feature_df, rating_df, user_exp_df], ignore_index=True)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.expand_frame_repr', False)
-print(combined_df.head())
+# pd.set_option('display.max_columns', None)
+# pd.set_option('display.expand_frame_repr', False)
+# print(combined_df.head())
+
+# Save the cleaned DataFrame to a new CSV file
+combined_df.to_csv(folder_path+'combined_reviews.csv', index=False)
