@@ -23,7 +23,7 @@ DATA_DIR="./data"
 ZIP_FILE="./data.zip"
 
 # Check if the ZIP file exists
-if [ ! -f "$ZIP_FILE" ]; then
+if [ ! -f "$DATA_DIR" ]; then
     echo "Data zip file does not exist. Downloading..."
     gdown "1xAH5thJeGNs-FB4JDMVhldWyp8t-4jNi" -O "$ZIP_FILE"
     echo "Unzipping the data..."
