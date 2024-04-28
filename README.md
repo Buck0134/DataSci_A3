@@ -39,13 +39,15 @@ To replicate findings reported: run the following command.
     python3 main.py
     ```
 2. **Run 2 experiments with a total of 640 different configurations**
-    The default set up will first run 320 sets of congigurations based on TF-IFD transfomer. To experiment with words embedding, rerun experiments.py after commenting out the preprocess_text_data with TFIDF function and uncommenting the preprocess_text_data with words embeddings in main.py
+
+   The default set up will first run 320 sets of congigurations based on TF-IFD transfomer. To experiment with words embedding, rerun experiments.py after commenting out the preprocess_text_data with TFIDF function and uncommenting the preprocess_text_data with words embeddings in main.py
 
     ```sh
     python3 experiments.py
     ```
-3. **Run Visualization of experiments result based on pre-ran experiments results**
-    The default set up will run all 11 visualization, comment out any unwanted plotting as wishes. The data plotted is located under result folder.  
+4. **Run Visualization of experiments result based on pre-ran experiments results**
+
+   The default set up will run all 11 visualization, comment out any unwanted plotting as wishes. The data plotted is located under result folder.  
 
     ```sh
     python3 dataVisualization.py
