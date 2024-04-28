@@ -1,86 +1,55 @@
-import itertools
 import pandas as pd
-import matplotlib.pyplot as plt
-from Model.textClassifier import TextClassifier
-from textPreprocessor.testPreprocessor import TextPreprocessor
-from sklearn.metrics import classification_report, accuracy_score, f1_score
+from main import pipeline
+import itertools
 from tqdm import tqdm
+import spacy
 
-# Possible Classifers Models 
+# Define the configurations
+model_types = ['random_forest','naive_bayes', 'mlp']
+textual_feature_selection = ['comment', 'lemmatized_comment', 'stopwords_removal_nltk', 'stopwords_removal_lemmatization']
+confidence_thresholds = [0.5, 0.6, 0.7, 0.8]
+include_ratings = [True, False]
+include_sentiScore_pos = [True, False]
+shuffle_datas = [True, False]
+use_grid_searches = [False]
 
-models = ['random_forest', 'svm', 'naive_bayes','mlp']
+configurations = list(itertools.product(model_types, textual_feature_selection, confidence_thresholds, include_ratings, include_sentiScore_pos, shuffle_datas, use_grid_searches))
+nlp = spacy.load('en_core_web_md')  # Load the medium model with vectors
 
-# Possible settings
-keys = ['stopwords_removal_nltk', 'stopwords_removal', 'stemmed', 'lemmatized_comment', 'stopwords_removal_lemmatization']
-options = [False, True]
-
-# Generate all possible combinations of meta options
-meta_options = list(itertools.product(options, repeat=3))  # Three meta options: include_original, include_rating, include_sentiScore_pos
-
-# Load and prepare data
-file_path = './data/filtered_combined_reviews.csv'
-data = pd.read_csv(file_path)
-labelsPre = data['category']
-print()
-assert len(labelsPre) == len(data), "ORGINAL DF: Mismatch in number of samples between features and labels"
+config_dicts = [
+    {   'nlp': nlp,
+        'model_type': config[0],
+        'textual_feature': config[1],  # New feature selection parameter
+        'confidence_threshold': config[2],
+        'include_rating': config[3],
+        'include_sentiScore_pos': config[4],
+        'shuffle_data': config[5],
+        'use_grid_search': config[6]
+    }
+    for config in configurations
+]
+# Initialize an empty DataFrame to store results
 results = []
 
-# Initialize TextPreprocessor
-preprocessor = TextPreprocessor(data)
+# Loop through configurations and run the pipeline
+for config in tqdm(config_dicts, desc="Running experiments", unit="config"):
+    mc_perf, binary_perf, time_taken = pipeline(**config)
+    result ={
+        'Model Type': config['model_type'],
+        'Textual Feature': config['textual_feature'],  # Log the feature selection used
+        'Confidence Threshold': config['confidence_threshold'],
+        'Include Rating': config['include_rating'],
+        'Include SentiScore': config['include_sentiScore_pos'],
+        'Shuffle Data': config['shuffle_data'],
+        'Use Grid Search': config['use_grid_search'],
+        'MC Accuracy': mc_perf['accuracy'],  # Assuming 'accuracy' is a key in the returned dict
+        'Binary Accuracy': binary_perf['accuracy'],  # Same assumption as above
+        'Time Taken': time_taken
+    }
+    results.append(result)
 
-total = len(keys) * len(meta_options) * len(models)
-with tqdm(total=total, desc="Processing configurations") as pbar:
-    for model_name in models:
-        print(f"Start Processing Config for {model_name}")
-        results = []
-        for key in keys:
-            for original, rating, sentiScore in meta_options:
-                labels = preprocessor.data['category']
-                features = preprocessor.preprocess(key=key, include_original=original, include_rating=rating, include_sentiScore_pos=sentiScore)
-                if len(features) != len(labels):
-                    pbar.update(1)
-                    print('Misconfigured')
-                    continue  # Skip misconfigured setups
+results_df = pd.DataFrame(results)
 
-                # Train and evaluate classifier
-                classifier = TextClassifier(features, labels, model_type= model_name)
-                classifier.train()
-                accuracy = accuracy_score(classifier.y_test, classifier.predict())
-                f1 = f1_score(classifier.y_test, classifier.predict(), average='weighted')
-
-                # Store results
-                results.append({
-                    'key': key,
-                    'include_original': original,
-                    'include_rating': rating,
-                    'include_sentiScore_pos': sentiScore,
-                    'accuracy': accuracy,
-                    'f1_score': f1
-                })
-                pbar.update(1)  # Update progress bar after each configuration
-        # Convert results to DataFrame and save
-        results_df = pd.DataFrame(results)
-        results_df.to_csv(f'./results/NOT/NOT_DROPPED_{model_name}_Result.csv', index=False)
-
-print("All model configurations processed and saved.")
-# Add this print just before converting results to DataFrame
-# print("Results collected:", results)
-
-# # Convert results to DataFrame
-# results_df = pd.DataFrame(results)
-# # print("DataFrame Head:", results_df.head())
-# results_df.to_csv('./results/RF_Result', index=False)
-
-# Plotting
-# fig, ax = plt.subplots(figsize=(12, 8))
-# for key, group in results_df.groupby('key'):
-#     ax.plot(group['accuracy'], label=f"{key} Accuracy", marker='o')
-#     ax.plot(group['f1_score'], label=f"{key} F1-Score", marker='x')
-
-# ax.set_title('Classification Performance by Preprocessing Key and Meta Options')
-# ax.set_xlabel('Configuration Index')
-# ax.set_ylabel('Score')
-# ax.legend()
-# plt.xticks(ticks=range(len(results_df)), labels=[f"Config {i+1}" for i in range(len(results_df))], rotation=45)
-# plt.tight_layout()
-# plt.show()
+# Save the results to CSV for further analysis
+results_df.to_csv('./results/TFIDF_experiment_results.csv', index=False)
+print("Experiments completed and results saved.")
