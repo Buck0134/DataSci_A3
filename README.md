@@ -38,7 +38,7 @@ To replicate findings reported: run the following command.
     ```sh
     python3 main.py
     ```
-2. **Run 2 experiments with a total 640 different configurations**
+2. **Run 2 experiments with a total of 640 different configurations**
     The default set up will first run 320 sets of congigurations based on TF-IFD transfomer. To experiment with words embedding, rerun experiments.py after commenting out the preprocess_text_data with TFIDF function and uncommenting the preprocess_text_data with words embeddings in main.py
 
     ```sh
